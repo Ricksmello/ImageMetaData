@@ -10,15 +10,12 @@ def apresentarDataHora(filename):
         exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
 
         # Grab the date
-        date_obj = f"Data e hora do arquivo: {exif["DateTime"].replace(":", ".")}"
-        print(date_obj)
+        date_obj = exif["DateTime"]
+        print('Modificado em:', date_obj)
     else:
-        print('Data hora da última alteração: %s' % filename)
-
-        path = filename
-        modify_time = os.path.getmtime(path)
+        modify_time = os.path.getmtime(filename)
         modify_date = datetime.datetime.fromtimestamp(modify_time)
-        print('Modified on:', modify_date)
+        print('Modificado em: ', modify_date.strftime("%d/%m/%Y %H:%M:%S"))
 
 
 def listar_arquivos(diretorio):
@@ -38,9 +35,12 @@ def listar_arquivos(diretorio):
     for arquivo in arquivos:
         # Verifica se a extensão do arquivo corresponde a uma extensão de imagem
         if os.path.splitext(arquivo)[1].lower() in extensoes_imagem:
-            print(arquivo)
+            print("-" * 50)
+            print(f"Nome do arquivo: {arquivo}")
+            apresentarDataHora(filename=arquivo)
+            print("-" * 50)
 
 
 if __name__ == "__main__":
     listar_arquivos(os.getcwd())
-    apresentarDataHora(filename="image.jpg")
+
