@@ -3,44 +3,70 @@ import datetime
 import os
 
 
-def apresentarDataHora(filename):
-    image_exif = Image.open(filename).getexif()
-    if image_exif:
-        # Make a map with tag names
-        exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
-
-        # Grab the date
-        date_obj = exif["DateTime"]
-        print('Modificado em:', date_obj)
-    else:
-        modify_time = os.path.getmtime(filename)
-        modify_date = datetime.datetime.fromtimestamp(modify_time)
-        print('Modificado em: ', modify_date.strftime("%d/%m/%Y %H:%M:%S"))
+def main():
+    # List the files from the current folder.
+    listFiles(os.getcwd())
 
 
-def listar_arquivos(diretorio):
-    # Verifica se o diretório existe
+def listFiles(diretorio):
     if not os.path.isdir(diretorio):
         print(f'O diretório "{diretorio}" não existe.')
         return
 
-    # Lista todos os arquivos no diretório
+    # List the files.
     arquivos = os.listdir(diretorio)
 
-    # Extensões de arquivo de imagem comuns
+    # Only pictures files.
     extensoes_imagem = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
 
-    # Apresenta apenas os arquivos de imagem
+    # Show the name and the date.
     print(f'Arquivos de imagem em "{diretorio}":')
     for arquivo in arquivos:
         # Verifica se a extensão do arquivo corresponde a uma extensão de imagem
-        if os.path.splitext(arquivo)[1].lower() in extensoes_imagem:
+        extension = os.path.splitext(arquivo)[1].lower()
+
+        if extension in extensoes_imagem:
             print("-" * 50)
-            print(f"Nome do arquivo: {arquivo}")
-            apresentarDataHora(filename=arquivo)
+            print(f"File name: {arquivo}")
+            file_date_time = showDateTime(filename=arquivo)
+            print(f"Created / Changed in: {file_date_time}")
             print("-" * 50)
+
+            # Rename the files.
+            renameFile(arquivo, file_date_time, extension)
+
+
+def showDateTime(filename):
+    image_exif = Image.open(filename).getexif()
+    if image_exif:  # Grab the date from file description.
+        exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
+
+        file_date_time = exif["DateTime"]
+
+    else:  # Grab the date from last change.
+        file_date_time = os.path.getmtime(filename)
+        file_date_time = datetime.datetime.fromtimestamp(file_date_time).strftime("%Y/%m/%d %H:%M:%S")
+
+    file_date_time = file_date_time.replace(":", ".")
+    file_date_time = file_date_time.replace("/", ".")
+
+    return file_date_time
+
+
+def renameFile(arquivo, file_date_time, extension):
+
+    # Rename file.
+    try:
+        os.rename(arquivo, file_date_time + extension)
+        print(f"O arquivo {arquivo} foi renomeado para {file_date_time}.")
+    except FileNotFoundError:
+        print(f"O arquivo {arquivo} não foi encontrado.")
+    except FileExistsError:
+        print(f"Já existe um arquivo com o nome {file_date_time}.")
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
 
 
 if __name__ == "__main__":
-    listar_arquivos(os.getcwd())
+    main()
 
