@@ -1,7 +1,6 @@
-from PIL import Image, ExifTags
 import datetime
 import os
-
+import exifread
 
 diretorio = os.getcwd()
 
@@ -41,11 +40,26 @@ def listFiles():
 
 def showDateTime(filename):
     full_path = os.path.join(diretorio, filename)
-    file_date_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path)) ### Está pegando a data de modificação.
-    file_date_time = file_date_time.strftime("%Y/%m/%d %H:%M:%S")
 
-    file_date_time = file_date_time.replace(":", ".")
-    file_date_time = file_date_time.replace("/", ".")
+    with open(full_path, 'rb') as image:  # file path and name
+        exif = exifread.process_file(image)
+
+    # Take the Data Taken, otherwise take the timestamp.
+    if exif:
+        file_date_time = str(exif['EXIF DateTimeOriginal'])
+        file_brigtness = str(exif['EXIF BrightnessValue'])[:7]
+        file_date_time = file_date_time + file_brigtness
+        file_date_time = file_date_time.replace(".", "")
+
+    else:
+
+        file_date_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+        file_date_time = file_date_time.strftime("%Y/%m/%d, %H:%M:%S.%f")
+
+    if ":" in file_date_time:
+        file_date_time = file_date_time.replace(":", ".")
+        file_date_time = file_date_time.replace("/", ".")
+        file_date_time = file_date_time.replace(",", "")
 
     return file_date_time
 
