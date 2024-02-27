@@ -4,7 +4,6 @@ import exifread
 
 diretorio = os.getcwd()
 
-
 def main():
     # List the files from the current folder.
     listFiles()
@@ -47,8 +46,9 @@ def showDateTime(filename):
     # Take the Data Taken, otherwise take the timestamp.
     if exif:
         file_date_time = str(exif['EXIF DateTimeOriginal'])
-        file_brigtness = str(exif['EXIF BrightnessValue'])[:7]
-        file_date_time = file_date_time + file_brigtness
+        file_width = str(exif['EXIF ExifImageWidth'])
+        file_lenght = str(exif['EXIF ExifImageLength'])
+        file_date_time = file_date_time + '_w_' + file_width + '_l_' + file_lenght
         file_date_time = file_date_time.replace(".", "")
 
     else:
@@ -64,18 +64,29 @@ def showDateTime(filename):
     return file_date_time
 
 
-def renameFile(arquivo, file_date_time, extension):
+def renameFile(file, file_date_time, extension):
 
     # Rename file.
     try:
-        os.rename(arquivo, file_date_time + extension)
-        print(f"O arquivo {arquivo} foi renomeado para {file_date_time}.")
+        os.rename(file, file_date_time + extension)
+        print(f"O arquivo {file} foi renomeado para {file_date_time}.")
     except FileNotFoundError:
-        print(f"O arquivo {arquivo} não foi encontrado.")
+        print(f"O arquivo {file} não foi encontrado.")
     except FileExistsError:
+        os.rename(file, file_date_time + " - Duplicated_1" + extension)
+        checkDuplicity(file)
         print(f"Já existe um arquivo com o nome {file_date_time}.")
     except Exception as e:
         print(f"Ocorreu um erro: {e}")
+
+
+def checkDuplicity(file):
+
+    if "Duplicated" in file:
+        position_number = file.rfind("_") + 1
+        position_dot = file.rfind('.')
+
+        return file[position_number:position_dot]
 
 
 if __name__ == "__main__":
