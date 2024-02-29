@@ -3,92 +3,102 @@ import os
 import exifread
 
 diretorio = os.getcwd()
-
-def main():
-    # List the files from the current folder.
-    listFiles()
+file_list = []
 
 
-def listFiles():
-    if not os.path.isdir(diretorio):
-        print(f'O diretório "{diretorio}" não existe.')
-        return
+class Main:
 
-    # List the files.
-    arquivos = os.listdir(diretorio)
+    def __init__(self):
+        # List the files from the current folder.
+        Main.listFiles(self, create_list=False)
 
-    # Only pictures files.
-    extensoes_imagem = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+    def listFiles(self, **kwargs):
 
-    # Show the name and the date.
-    print(f'Arquivos de imagem em "{diretorio}":')
-    for arquivo in arquivos:
-        # Verifica se a extensão do arquivo corresponde a uma extensão de imagem
-        extension = os.path.splitext(arquivo)[1].lower()
+        create_list = kwargs.get("create_list")
 
-        if extension in extensoes_imagem:
-            print("-" * 50)
-            print(f"File name: {arquivo}")
-            file_date_time = showDateTime(filename=arquivo)
-            print(f"Created / Changed in: {file_date_time}")
-            print("-" * 50)
+        if not os.path.isdir(diretorio):
+            print(f'O diretório "{diretorio}" não existe.')
+            return
 
-            # Rename the files.
-            renameFile(arquivo, file_date_time, extension)
+        # List the files.
+        arquivos = os.listdir(diretorio)
 
+        # Only pictures files.
+        extensoes_imagem = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
 
-def showDateTime(filename):
-    full_path = os.path.join(diretorio, filename)
+        # Show the name and the date.
+        print(f'Arquivos de imagem em "{diretorio}":')
+        for arquivo in arquivos:
+            # Verify the file extension.
+            extension = os.path.splitext(arquivo)[1].lower()
 
-    with open(full_path, 'rb') as image:  # file path and name
-        exif = exifread.process_file(image)
+            if extension in extensoes_imagem and create_list is False:
+                print("-" * 50)
+                print(f"File name: {arquivo}")
+                file_date_time = Main.showDateTime(self, filename=arquivo)
+                print(f"Created / Changed in: {file_date_time}")
+                print("-" * 50)
 
-    # Take the Data Taken, otherwise take the timestamp.
-    if exif:
-        file_date_time = str(exif['EXIF DateTimeOriginal'])
-        file_width = str(exif['EXIF ExifImageWidth'])
-        file_lenght = str(exif['EXIF ExifImageLength'])
-        file_date_time = file_date_time + '_w_' + file_width + '_l_' + file_lenght
-        file_date_time = file_date_time.replace(".", "")
+                # Check before rename.
+                new_name = Main.checkDuplicity(self, file_date_time, extension)
 
-    else:
+                # Rename the files.
+                Main.renameFile(self, arquivo, new_name)
 
-        file_date_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
-        file_date_time = file_date_time.strftime("%Y/%m/%d, %H:%M:%S.%f")
+    def showDateTime(self, filename):
 
-    if ":" in file_date_time:
-        file_date_time = file_date_time.replace(":", ".")
-        file_date_time = file_date_time.replace("/", ".")
-        file_date_time = file_date_time.replace(",", "")
+        full_path = os.path.join(diretorio, filename)
 
-    return file_date_time
+        with open(full_path, 'rb') as image:  # file path and name
+            exif = exifread.process_file(image)
 
+        # Take the Data Taken, otherwise take the timestamp.
+        if exif:
+            file_date_time = str(exif['EXIF DateTimeOriginal'])
+            file_width = str(exif['EXIF ExifImageWidth'])
+            file_lenght = str(exif['EXIF ExifImageLength'])
+            file_date_time = file_date_time + '_w_' + file_width + '_l_' + file_lenght
+            file_date_time = file_date_time.replace(".", "")
 
-def renameFile(file, file_date_time, extension):
+        else:
 
-    # Rename file.
-    try:
-        os.rename(file, file_date_time + extension)
-        print(f"O arquivo {file} foi renomeado para {file_date_time}.")
-    except FileNotFoundError:
-        print(f"O arquivo {file} não foi encontrado.")
-    except FileExistsError:
-        os.rename(file, file_date_time + " - Duplicated_1" + extension)
-        checkDuplicity(file)
-        print(f"Já existe um arquivo com o nome {file_date_time}.")
-    except Exception as e:
-        print(f"Ocorreu um erro: {e}")
+            file_date_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+            file_date_time = file_date_time.strftime("%Y/%m/%d, %H:%M:%S.%f")
 
+        if ":" in file_date_time:
+            file_date_time = file_date_time.replace(":", ".")
+            file_date_time = file_date_time.replace("/", ".")
+            file_date_time = file_date_time.replace(",", "")
 
-def checkDuplicity(file):
+        return file_date_time
 
-    if "Duplicated" in file:
-        position_number = file.rfind("_") + 1
-        position_dot = file.rfind('.')
+    def renameFile(self, file, new_name):
 
-        return file[position_number:position_dot]
+        # Rename file.
+        try:
+            os.rename(file, new_name)
+            print(f"O arquivo {file} foi renomeado para {new_name}.")
+        except FileNotFoundError:
+            print(f"O arquivo {file} não foi encontrado.")
+        except FileExistsError:
+            print(f"Já existe um arquivo com o nome {new_name}.")
+        except Exception as e:
+            print(f"Ocorreu um erro: {e}")
+
+    def checkDuplicity(self, file_date_time, extension):
+
+        # List the files.
+        files = os.listdir(diretorio)
+
+        # Show the name and the date.
+        print(f'Arquivos de imagem em "{diretorio}":')
+        for new_sequence in range(1, 100):
+
+            file_name = file_date_time + " - Duplicated_" + str(new_sequence) + extension
+
+            if not (file_name in files): ### Está mudando mesmo que já tenha o Duplicated.
+                return file_name
 
 
 if __name__ == "__main__":
-    main()
-
+    Main()
