@@ -2,7 +2,7 @@ import datetime
 import os
 import exifread
 
-diretorio = os.getcwd()
+folders = os.getcwd()
 file_list = []
 
 
@@ -10,32 +10,39 @@ class Main:
 
     def __init__(self):
         # List the files from the current folder.
-        Main.listFiles(self, create_list=False)
+        Main.listFiles(self)
 
     def listFiles(self, **kwargs):
 
-        create_list = kwargs.get("create_list")
-
-        if not os.path.isdir(diretorio):
-            print(f'O diretório "{diretorio}" não existe.')
+        if not os.path.isdir(folders):
+            print(f'O diretório "{folders}" não existe.')
             return
 
         # List the files.
-        arquivos = os.listdir(diretorio)
+        files = os.listdir(folders)
 
         # Only pictures files.
-        extensoes_imagem = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+        extension_image = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+
+        # Only files did not change.
+        #change_sintaxes = ['_w_', '_l_']
 
         # Show the name and the date.
-        print(f'Arquivos de imagem em "{diretorio}":')
-        for arquivo in arquivos:
+        print(f'Arquivos de imagem em "{folders}":')
+        for file in files:
             # Verify the file extension.
-            extension = os.path.splitext(arquivo)[1].lower()
+            extension = os.path.splitext(file)[1].lower()
 
-            if extension in extensoes_imagem and create_list is False:
+            # Only files did not change.
+            if file.__contains__('_w_') or file.__contains__('_l_'):
+                has_change_sintaxe = True
+            else:
+                has_change_sintaxe = False
+
+            if (extension in extension_image) and (has_change_sintaxe is False):
                 print("-" * 50)
-                print(f"File name: {arquivo}")
-                file_date_time = Main.showDateTime(self, filename=arquivo)
+                print(f"File name: {file}")
+                file_date_time = Main.showDateTime(self, filename=file)
                 print(f"Created / Changed in: {file_date_time}")
                 print("-" * 50)
 
@@ -43,11 +50,11 @@ class Main:
                 new_name = Main.checkDuplicity(self, file_date_time, extension)
 
                 # Rename the files.
-                Main.renameFile(self, arquivo, new_name)
+                Main.renameFile(self, file, new_name)
 
     def showDateTime(self, filename):
 
-        full_path = os.path.join(diretorio, filename)
+        full_path = os.path.join(folders, filename)
 
         with open(full_path, 'rb') as image:  # file path and name
             exif = exifread.process_file(image)
@@ -88,15 +95,15 @@ class Main:
     def checkDuplicity(self, file_date_time, extension):
 
         # List the files.
-        files = os.listdir(diretorio)
+        files = os.listdir(folders)
 
         # Show the name and the date.
-        print(f'Arquivos de imagem em "{diretorio}":')
+        print(f'Arquivos de imagem em "{folders}":')
         for new_sequence in range(1, 100):
 
             file_name = file_date_time + " - Duplicated_" + str(new_sequence) + extension
 
-            if not (file_name in files): ### Está mudando mesmo que já tenha o Duplicated.
+            if not (file_name in files):
                 return file_name
 
 
