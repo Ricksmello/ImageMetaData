@@ -3,7 +3,7 @@ import os
 import exifread
 
 folders = os.getcwd()
-file_list = []
+file_list = {}
 
 
 class Main:
@@ -12,7 +12,13 @@ class Main:
         # List the files from the current folder.
         Main.listFiles(self)
 
+    '------------------------------------------------------------------------------------------------------------------'
+    ''
+    '------------------------------------------------------------------------------------------------------------------'
     def listFiles(self, **kwargs):
+
+        change_actual = False
+        actual_sequence = 1
 
         if not os.path.isdir(folders):
             print(f'O diretório "{folders}" não existe.')
@@ -24,35 +30,49 @@ class Main:
         # Only pictures files.
         extension_image = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
 
-        # Only files did not change.
-        #change_sintaxes = ['_w_', '_l_']
-
         # Show the name and the date.
         print(f'Arquivos de imagem em "{folders}":')
         for file in files:
             # Verify the file extension.
             extension = os.path.splitext(file)[1].lower()
 
-            # Only files did not change.
-            if file.__contains__('_w_') or file.__contains__('_l_'):
-                has_change_sintaxe = True
+            # Generate the new file name.
+            if extension in extension_image:
+                new_file_name = Main.newFileName(self, filename=file) + extension
             else:
-                has_change_sintaxe = False
+                continue
 
-            if (extension in extension_image) and (has_change_sintaxe is False):
-                print("-" * 50)
-                print(f"File name: {file}")
-                file_date_time = Main.showDateTime(self, filename=file)
-                print(f"Created / Changed in: {file_date_time}")
-                print("-" * 50)
+            file_list[file] = new_file_name
 
-                # Check before rename.
-                new_name = Main.checkDuplicity(self, file_date_time, extension)
+        for old_name, new_name in file_list.items():
+            print(old_name + " ----> " + new_name)
 
-                # Rename the files.
-                Main.renameFile(self, file, new_name)
+            extension = os.path.splitext(new_name)[1].lower()
+            old_name = os.path.splitext(old_name)[0]
+            new_name = os.path.splitext(new_name)[0]
 
-    def showDateTime(self, filename):
+            change_actual = (
+                Main.checkDuplicity(self,
+                                    new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
+                                                  extension, extension=extension))
+
+            while change_actual:
+                actual_sequence = actual_sequence + 1
+                change_actual = (
+                    Main.checkDuplicity(self,
+                                        new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
+                                                      extension, extension=extension))
+
+            Main.renameFile(self, file=old_name + extension,
+                            new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension)
+
+    '------------------------------------------------------------------------------------------------------------------'
+    ''
+    '------------------------------------------------------------------------------------------------------------------'
+    def newFileName(self, **kwargs):
+
+        # Arguments.
+        filename = kwargs.get("filename")
 
         full_path = os.path.join(folders, filename)
 
@@ -61,38 +81,51 @@ class Main:
 
         # Take the Data Taken, otherwise take the timestamp.
         if exif:
-            file_date_time = str(exif['EXIF DateTimeOriginal'])
+            new_file_name = str(exif['EXIF DateTimeOriginal'])
             file_width = str(exif['EXIF ExifImageWidth'])
             file_lenght = str(exif['EXIF ExifImageLength'])
-            file_date_time = file_date_time + '_w_' + file_width + '_l_' + file_lenght
-            file_date_time = file_date_time.replace(".", "")
+            new_file_name = new_file_name + '_w_' + file_width + '_l_' + file_lenght
+            new_file_name = new_file_name.replace(".", "")
 
         else:
 
-            file_date_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
-            file_date_time = file_date_time.strftime("%Y/%m/%d, %H:%M:%S.%f")
+            new_file_name = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+            new_file_name = new_file_name.strftime("%Y/%m/%d, %H:%M:%S.%f")
 
-        if ":" in file_date_time:
-            file_date_time = file_date_time.replace(":", ".")
-            file_date_time = file_date_time.replace("/", ".")
-            file_date_time = file_date_time.replace(",", "")
+        if ":" in new_file_name:
+            new_file_name = new_file_name.replace(":", ".")
+            new_file_name = new_file_name.replace("/", ".")
+            new_file_name = new_file_name.replace(",", "")
 
-        return file_date_time
+        return new_file_name
 
-    def renameFile(self, file, new_name):
+    '------------------------------------------------------------------------------------------------------------------'
+    ''
+    '------------------------------------------------------------------------------------------------------------------'
+    def renameFile(self, **kwargs):
+
+        # Arguments.
+        file = kwargs.get("file")
+        new_file_name = kwargs.get("new_file_name")
 
         # Rename file.
         try:
-            os.rename(file, new_name)
-            print(f"O arquivo {file} foi renomeado para {new_name}.")
+            os.rename(file, new_file_name)
+            print(f"O arquivo {file} foi renomeado para {new_file_name}.")
         except FileNotFoundError:
             print(f"O arquivo {file} não foi encontrado.")
         except FileExistsError:
-            print(f"Já existe um arquivo com o nome {new_name}.")
+            print(f"Já existe um arquivo com o nome {new_file_name}.")
         except Exception as e:
             print(f"Ocorreu um erro: {e}")
 
-    def checkDuplicity(self, file_date_time, extension):
+    '------------------------------------------------------------------------------------------------------------------'
+    ''
+    '------------------------------------------------------------------------------------------------------------------'
+    def checkDuplicity(self, **kwargs):
+
+        # Arguments.
+        new_file_name = kwargs.get("new_file_name")
 
         # List the files.
         files = os.listdir(folders)
@@ -101,10 +134,13 @@ class Main:
         print(f'Arquivos de imagem em "{folders}":')
         for new_sequence in range(1, 100):
 
-            file_name = file_date_time + " - Duplicated_" + str(new_sequence) + extension
+            # Verify if it is necessary to change the first file adding "Duplicated 1".
+            if new_file_name in files:
+                change_actual = True
+            else:
+                change_actual = False
 
-            if not (file_name in files):
-                return file_name
+            return change_actual
 
 
 if __name__ == "__main__":
