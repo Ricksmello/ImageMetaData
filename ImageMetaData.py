@@ -4,6 +4,7 @@ import exifread
 
 folders = os.getcwd()
 file_list = {}
+duplicity_list = {}
 
 
 class Main:
@@ -17,7 +18,7 @@ class Main:
     '------------------------------------------------------------------------------------------------------------------'
     def listFiles(self, **kwargs):
 
-        change_actual = False
+        ###change_actual = False
         actual_sequence = 1
 
         if not os.path.isdir(folders):
@@ -51,20 +52,41 @@ class Main:
             old_name = os.path.splitext(old_name)[0]
             new_name = os.path.splitext(new_name)[0]
 
-            change_actual = (
-                Main.checkDuplicity(self,
-                                    new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
-                                                  extension, extension=extension))
+            # change_actual = (
+            #     Main.checkDuplicity(self,
+            #                         new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension,
+            #                         extension=extension))
 
-            while change_actual:
+            # while change_actual:
+            #     actual_sequence = actual_sequence + 1
+            #     change_actual = (
+            #         Main.checkDuplicity(self,
+            #                             new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
+            #                                           extension, extension=extension))
+            #
+            # if actual_sequence > 1:
+            #     Main.renameFile(self, file=old_name + extension,
+            #                     new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension)
+            # else:
+
+            duplicity_list = Main.renameFile(self, old_name=old_name + extension, new_name=new_name + extension)
+
+        if duplicity_list:
+            # Main.renameFile(self, old_name=new_name + extension,
+            #                 new_name=new_name + " - duplicated_0" + extension)
+            for old_dup_name, new_dup_name in duplicity_list.items():
+                new_dup_name = os.path.splitext(new_dup_name)[0]
+                Main.renameFile(self, old_name=old_dup_name,
+                                new_name=new_dup_name + " - duplicated_" + actual_sequence.__str__() + extension)
                 actual_sequence = actual_sequence + 1
-                change_actual = (
-                    Main.checkDuplicity(self,
-                                        new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
-                                                      extension, extension=extension))
+            Main.renameFile(self, old_name=new_dup_name + extension,
+                            new_name=new_dup_name + " - duplicated_" + (actual_sequence).__str__() + extension)
 
-            Main.renameFile(self, file=old_name + extension,
-                            new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension)
+        actual_sequence = 1
+        ### Testar
+
+
+            ###actual_sequence = 1
 
     '------------------------------------------------------------------------------------------------------------------'
     ''
@@ -105,19 +127,22 @@ class Main:
     def renameFile(self, **kwargs):
 
         # Arguments.
-        file = kwargs.get("file")
-        new_file_name = kwargs.get("new_file_name")
+        old_name = kwargs.get("old_name")
+        new_name = kwargs.get("new_name")
 
         # Rename file.
         try:
-            os.rename(file, new_file_name)
-            print(f"O arquivo {file} foi renomeado para {new_file_name}.")
+            os.rename(old_name, new_name)
+            print(f"O arquivo {old_name} foi renomeado para {new_name}.")
         except FileNotFoundError:
-            print(f"O arquivo {file} não foi encontrado.")
+            print(f"O arquivo {old_name} não foi encontrado.")
         except FileExistsError:
-            print(f"Já existe um arquivo com o nome {new_file_name}.")
+            print(f"Já existe um arquivo com o nome {new_name}.")
+            duplicity_list[old_name] = new_name
         except Exception as e:
             print(f"Ocorreu um erro: {e}")
+
+        return duplicity_list
 
     '------------------------------------------------------------------------------------------------------------------'
     ''
