@@ -3,8 +3,8 @@ import os
 import exifread
 
 folders = os.getcwd()
-file_list = {}
-duplicity_list = {}
+duplicity_list = []
+total_list = {}
 
 
 class Main:
@@ -18,24 +18,29 @@ class Main:
     '------------------------------------------------------------------------------------------------------------------'
     def listFiles(self, **kwargs):
 
-        ###change_actual = False
-        actual_sequence = 1
-
         if not os.path.isdir(folders):
             print(f'O diretório "{folders}" não existe.')
             return
 
         # List the files.
         files = os.listdir(folders)
+        files = sorted(files, reverse=True)
 
         # Only pictures files.
         extension_image = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
 
         # Show the name and the date.
         print(f'Arquivos de imagem em "{folders}":')
-        for file in files:
+
+        for count, file in enumerate(files):
+
             # Verify the file extension.
             extension = os.path.splitext(file)[1].lower()
+
+            # Generate the new file name.
+            if extension in extension_image:
+                new_file_name = Main.newFileName(self, filename=file) + extension
+                total_list.setdefault(new_file_name, [])
 
             # Generate the new file name.
             if extension in extension_image:
@@ -43,50 +48,10 @@ class Main:
             else:
                 continue
 
-            file_list[file] = new_file_name
+            if new_file_name in total_list.keys():
+                total_list.setdefault(new_file_name, []).append(file)
 
-        for old_name, new_name in file_list.items():
-            print(old_name + " ----> " + new_name)
-
-            extension = os.path.splitext(new_name)[1].lower()
-            old_name = os.path.splitext(old_name)[0]
-            new_name = os.path.splitext(new_name)[0]
-
-            # change_actual = (
-            #     Main.checkDuplicity(self,
-            #                         new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension,
-            #                         extension=extension))
-
-            # while change_actual:
-            #     actual_sequence = actual_sequence + 1
-            #     change_actual = (
-            #         Main.checkDuplicity(self,
-            #                             new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() +
-            #                                           extension, extension=extension))
-            #
-            # if actual_sequence > 1:
-            #     Main.renameFile(self, file=old_name + extension,
-            #                     new_file_name=new_name + " - duplicated_" + actual_sequence.__str__() + extension)
-            # else:
-
-            duplicity_list = Main.renameFile(self, old_name=old_name + extension, new_name=new_name + extension)
-
-        if duplicity_list:
-            # Main.renameFile(self, old_name=new_name + extension,
-            #                 new_name=new_name + " - duplicated_0" + extension)
-            for old_dup_name, new_dup_name in duplicity_list.items():
-                new_dup_name = os.path.splitext(new_dup_name)[0]
-                Main.renameFile(self, old_name=old_dup_name,
-                                new_name=new_dup_name + " - duplicated_" + actual_sequence.__str__() + extension)
-                actual_sequence = actual_sequence + 1
-            Main.renameFile(self, old_name=new_dup_name + extension,
-                            new_name=new_dup_name + " - duplicated_" + (actual_sequence).__str__() + extension)
-
-        actual_sequence = 1
-        ### Testar
-
-
-            ###actual_sequence = 1
+        print(total_list)
 
     '------------------------------------------------------------------------------------------------------------------'
     ''
