@@ -53,6 +53,23 @@ class Main:
 
         print(total_list)
 
+        # Rename de files.
+        for item in total_list:
+
+            extension = os.path.splitext(item)[1].lower()
+            item_no_extension = os.path.splitext(item)[0].lower()
+
+            if len(total_list[item]) > 1:
+                #print(f"{item} has {len(total_list[item])}")
+                for count, subitems in enumerate(total_list[item]):
+
+                    #print(subitems)
+                    Main.renameFile(self, old_name=subitems,
+                                    new_name=item_no_extension + " - Duplicated " + (count + 1).__str__() + extension)
+            else:
+                Main.renameFile(self, old_name=total_list[item], new_name=item_no_extension + extension)
+            #print(total_list[item])
+
     '------------------------------------------------------------------------------------------------------------------'
     ''
     '------------------------------------------------------------------------------------------------------------------'
@@ -103,11 +120,9 @@ class Main:
             print(f"O arquivo {old_name} não foi encontrado.")
         except FileExistsError:
             print(f"Já existe um arquivo com o nome {new_name}.")
-            duplicity_list[old_name] = new_name
         except Exception as e:
             print(f"Ocorreu um erro: {e}")
 
-        return duplicity_list
 
     '------------------------------------------------------------------------------------------------------------------'
     ''
