@@ -2,6 +2,7 @@ import exifread
 import datetime
 import os
 import socket
+import shutil
 
 
 folder = os.getcwd()
@@ -88,20 +89,38 @@ def renameFile(**kwargs):
         addLogs(message="General", value=f"Something wrong happened: {e}")
 
 
+def move_files_to_root(root_directory):
+    # List all files in the directory tree
+    for root_folder, sub_folders, files in os.walk(root_directory):
+        for file in files:
+            # Build the full path of the file
+            full_path = os.path.join(root_folder, file)
+            try:
+                # Move the file to the root of the code
+                shutil.move(full_path, os.path.join(root_directory, file))
+                print(f"File '{file}' moved successfully to the root of the code.")
+            except Exception as e:
+                print(f"Error moving file '{file}': {e}")
+
+# # Replace 'root_directory' with the directory you want to traverse
+# root_directory = '/path/to/your/directory'
+#
+# # Call the function to move the files
+# move_files_to_root(root_directory)
+
+
+
 def addLogs(**kwargs):
 
     try:
         # kwargs variables.
         message = kwargs.get("message")
         value = kwargs.get("value")
-        value1 = kwargs.get("value1")
-        value2 = kwargs.get("value2")
 
         # Append the log file.
         with open(path, 'a+', encoding='utf-8') as log_file:
             if message == 'NewSession':
-                log_file.write(str(value) + "\n")  # Test case name.
-                log_file.write("")
+                log_file.write(f"\nNew Log Session - {datetime_log}\n\n")
             elif message == 'General':
                 type_log = "LOG"
 
@@ -110,10 +129,10 @@ def addLogs(**kwargs):
 
                 log_file.write(datetime_log + " - " + type_log + " - " + value + "\n")
 
-            elif message == 'EndExecution':
+            elif message == 'EndSession':
                 log_file.write("\n " + "*" * 138 + "\n")
             else:
-                log_file.write(datetime_log + " - Log       - " + value + " " + " - " + str(value1) + "\n")
+                raise
 
     except Exception as ex:
         print(f"Log error: ", ex)

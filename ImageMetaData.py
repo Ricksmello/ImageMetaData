@@ -9,7 +9,10 @@ class Main:
 
     def __init__(self):
         # List the files from the current folder.
+
+        aux.addLogs(message="NewSession")
         Main.listFiles(self)
+        aux.addLogs(message="EndSession")
 
     @staticmethod
     def listFiles(self):
