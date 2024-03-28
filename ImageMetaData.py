@@ -11,11 +11,12 @@ class Main:
         # List the files from the current folder.
 
         aux.addLogs(message="NewSession")
-        Main.listFiles(self)
+        aux.move_files_to_root()
+        ###Main.listFiles()
         aux.addLogs(message="EndSession")
 
     @staticmethod
-    def listFiles(self):
+    def listFiles():
         """
         Lista all the files in a specific folder.
 

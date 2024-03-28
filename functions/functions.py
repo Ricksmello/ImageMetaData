@@ -3,6 +3,7 @@ import datetime
 import os
 import socket
 import shutil
+from pathlib import Path
 
 
 folder = os.getcwd()
@@ -89,25 +90,37 @@ def renameFile(**kwargs):
         addLogs(message="General", value=f"Something wrong happened: {e}")
 
 
-def move_files_to_root(root_directory):
-    # List all files in the directory tree
-    for root_folder, sub_folders, files in os.walk(root_directory):
+@staticmethod
+def move_files_to_root():
+    """
+    Move image files to the root folder.
+
+    :argument:
+       No args.
+
+    :returns:
+        No return.
+    """
+
+    # Ask for the path to scan.
+    print(f"Inform the path to scan the image files:")
+    full_path = input()
+    full_path = os.path.abspath(full_path)
+
+    if not os.path.isdir(full_path):
+        print(f'The path "{full_path}" is not a valid directory.')
+        return
+
+    for root, dirs, files in os.walk(full_path):
         for file in files:
-            # Build the full path of the file
-            full_path = os.path.join(root_folder, file)
-            try:
-                # Move the file to the root of the code
-                shutil.move(full_path, os.path.join(root_directory, file))
-                print(f"File '{file}' moved successfully to the root of the code.")
-            except Exception as e:
-                print(f"Error moving file '{file}': {e}")
-
-# # Replace 'root_directory' with the directory you want to traverse
-# root_directory = '/path/to/your/directory'
-#
-# # Call the function to move the files
-# move_files_to_root(root_directory)
-
+            full_file_path = os.path.join(root, file)
+            end = full_file_path.find(file) - 1
+            file_path = full_file_path[:end]
+            if file_path != full_path:
+                shutil.move(full_file_path, full_path)
+                print(f"FILE: {file} copied\n"
+                      f"FROM: {file_path}\n"
+                      f"TO  : {full_path}\n")
 
 
 def addLogs(**kwargs):
