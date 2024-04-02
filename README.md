@@ -1,8 +1,12 @@
 ## Release notes ##
 
 :exclamation:
+**Version 1.3.1**                            
+<em>04/Xx/2024</em>
+-  Merging the file movement with the file rename code.
+
 **Version 1.3.0**                            
-<em>03/25/2024</em>
+<em>03/28/2024</em>
 -  Moving images from subfolders to the root path.
 
 **Version 1.2.0**                            

@@ -3,18 +3,14 @@ import datetime
 import os
 import socket
 import shutil
-from pathlib import Path
 
 
-folder = os.getcwd()
 datetime_log: str = datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
 # Get the hostname.
 hostname = socket.gethostname()
 # Get the datetime.
 date_log = str(datetime.datetime.now().strftime("%d.%m.%Y"))
-# Set the file name.
-path = os.path.join(folder, hostname + " - " + date_log + ".log")
 
 
 def newFileName(**kwargs):
@@ -22,7 +18,9 @@ def newFileName(**kwargs):
     Generate the new file name.
 
     :argument:
-       filename (str): The actual file name.
+        filename (str): The actual file name.
+        full_path (str): Path to treat the files.
+        full_path_log (str): Path of the log file.
 
     :returns:
         new_file_name (str): The new file name.
@@ -30,31 +28,37 @@ def newFileName(**kwargs):
 
     # Arguments.
     filename = kwargs.get("filename")
+    full_path = kwargs.get("full_path")
+    full_path_log = kwargs.get("full_path_log")
 
-    full_path = os.path.join(folder, filename)
+    try:
+        with open(os.path.join(full_path, filename), 'rb') as image:  # file path and name
+            exif = exifread.process_file(image)
 
-    with open(full_path, 'rb') as image:  # file path and name
-        exif = exifread.process_file(image)
+        # Take the Data Taken, otherwise take the timestamp.
+        if exif: ### Tem o EXIF mas não tem os campos necessários.
+            new_file_name = str(exif['EXIF DateTimeOriginal'])
+            file_width = str(exif['EXIF ExifImageWidth'])
+            file_lenght = str(exif['EXIF ExifImageLength'])
+            new_file_name = new_file_name + '_w_' + file_width + '_l_' + file_lenght
+            new_file_name = new_file_name.replace(".", "")
+            addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using Width and Lenght.")
 
-    # Take the Data Taken, otherwise take the timestamp.
-    if exif:
-        new_file_name = str(exif['EXIF DateTimeOriginal'])
-        file_width = str(exif['EXIF ExifImageWidth'])
-        file_lenght = str(exif['EXIF ExifImageLength'])
-        new_file_name = new_file_name + '_w_' + file_width + '_l_' + file_lenght
-        new_file_name = new_file_name.replace(".", "")
+        else:
 
-    else:
+            new_file_name = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+            new_file_name = new_file_name.strftime("%Y/%m/%d, %H:%M:%S.%f")
+            addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using DateTime.")
 
-        new_file_name = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
-        new_file_name = new_file_name.strftime("%Y/%m/%d, %H:%M:%S.%f")
+        if ":" in new_file_name:
+            new_file_name = new_file_name.replace(":", ".")
+            new_file_name = new_file_name.replace("/", ".")
+            new_file_name = new_file_name.replace(",", "")
 
-    if ":" in new_file_name:
-        new_file_name = new_file_name.replace(":", ".")
-        new_file_name = new_file_name.replace("/", ".")
-        new_file_name = new_file_name.replace(",", "")
+        return new_file_name
 
-    return new_file_name
+    except Exception as ex:
+        print(f"Log error: ", ex)
 
 
 @staticmethod
@@ -63,49 +67,52 @@ def renameFile(**kwargs):
     Reanem the file.
 
     :argument:
-       old_name (str): The actual file name.
-       new_name (str): The new file name.
+        old_name (str): The actual file name.
+        new_name (str): The new file name.
+        full_path (str): Path to treat the files.
+        full_path_log (str): Path of the log file.
 
     :returns:
         No return.
     """
 
-    # Arguments.
-    old_name = kwargs.get("old_name")
-    new_name = kwargs.get("new_name")
+    # Args.
+    full_path = kwargs.get("full_path")
+    full_path_log = kwargs.get("full_path_log")
+    old_name = os.path.join(full_path, kwargs.get("old_name"))
+    new_name = os.path.join(full_path, kwargs.get("new_name"))
 
     # Rename file.
     try:
         os.rename(old_name, new_name)
         print(f"The file {old_name} was renamed to {new_name}.")
-        addLogs(message="General", value=f"The file {old_name} was renamed to {new_name}.")
+        addLogs(full_path_log=full_path_log, message="General", value=f"The file {old_name} was renamed to {new_name}.")
     except FileNotFoundError:
         print(f"The file {old_name} was not found.")
-        addLogs(message="General", value=f"The file {old_name} was not found.")
+        addLogs(full_path_log=full_path_log, message="General", value=f"The file {old_name} was not found.")
     except FileExistsError:
         print(f"There is already a file with the name  {new_name}.")
-        addLogs(message="General", value=f"There is already a file with the name  {new_name}.")
+        addLogs(full_path_log=full_path_log, message="General",
+                value=f"There is already a file with the name  {new_name}.")
     except Exception as e:
         print(f"Something wrong happened: {e}")
-        addLogs(message="General", value=f"Something wrong happened: {e}")
+        addLogs(full_path_log=full_path_log, message="General", value=f"Something wrong happened: {e}")
 
 
 @staticmethod
-def move_files_to_root():
+def move_files_to_root(**kwargs):
     """
     Move image files to the root folder.
 
     :argument:
-       No args.
+        full_path (str): Path to treat the files.
 
     :returns:
         No return.
     """
 
-    # Ask for the path to scan.
-    print(f"Inform the path to scan the image files:")
-    full_path = input()
-    full_path = os.path.abspath(full_path)
+    # Args.
+    full_path = kwargs.get("full_path")
 
     if not os.path.isdir(full_path):
         print(f'The path "{full_path}" is not a valid directory.')
@@ -124,14 +131,24 @@ def move_files_to_root():
 
 
 def addLogs(**kwargs):
+    """
+    Add logs in a file.
+
+    :argument:
+        full_path (str): Path to treat the files.
+
+    :returns:
+        No return.
+    """
 
     try:
         # kwargs variables.
         message = kwargs.get("message")
         value = kwargs.get("value")
+        full_path_log = kwargs.get("full_path_log")
 
         # Append the log file.
-        with open(path, 'a+', encoding='utf-8') as log_file:
+        with open(full_path_log, 'a+', encoding='utf-8') as log_file:
             if message == 'NewSession':
                 log_file.write(f"\nNew Log Session - {datetime_log}\n\n")
             elif message == 'General':
