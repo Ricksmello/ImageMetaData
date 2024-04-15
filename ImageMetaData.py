@@ -12,6 +12,8 @@ hostname = functions.functions.hostname
 
 class Main:
 
+    ### Pergunta se movimenta ou não!!!!
+
     def __init__(self):
         # List the files from the current folder.
 
@@ -26,7 +28,7 @@ class Main:
 
         full_path_log = os.path.join(full_path, log_file)
 
-        aux.addLogs(full_path_log=full_path_log, message="NewSession") ### Full_path_log está com problema.
+        aux.addLogs(full_path_log=full_path_log, message="NewSession")
         aux.move_files_to_root(full_path=full_path)
         Main.listFiles(full_path_log=full_path_log, full_path=full_path)
         aux.addLogs(full_path_log=full_path_log, message="EndSession")
@@ -70,14 +72,10 @@ class Main:
 
             # Generate the new file name.
             if extension in extension_image:
-                new_file_name = (aux.newFileName(full_path_log=full_path_log, full_path=full_path, filename=file)
-                                 + extension)
+                new_file_name = aux.newFileName(full_path_log=full_path_log, full_path=full_path, filename=file)
+                new_file_name = new_file_name + extension
                 total_list.setdefault(new_file_name, [])
 
-            # Generate the new file name.
-            if extension in extension_image:
-                new_file_name = (aux.newFileName(full_path_log=full_path_log, full_path=full_path, filename=file)
-                                 + extension)
             else:
                 continue
 
@@ -89,8 +87,8 @@ class Main:
         # Rename de files.
         for item in total_list:
 
-            extension = os.path.splitext(item)[1].lower()
-            item_no_extension = os.path.splitext(item)[0].lower()
+            extension = os.path.splitext(item)[1].upper()
+            item_no_extension = os.path.splitext(item)[0].upper()
 
             if len(total_list[item]) > 1:
                 for count, subitems in enumerate(total_list[item]):

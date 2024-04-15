@@ -5,6 +5,7 @@ import socket
 import shutil
 
 
+# ImageFile.LOAD_TRUNCATED_IMAGES = True
 datetime_log: str = datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
 # Get the hostname.
@@ -32,17 +33,19 @@ def newFileName(**kwargs):
     full_path_log = kwargs.get("full_path_log")
 
     try:
-        with open(os.path.join(full_path, filename), 'rb') as image:  # file path and name
+        path_and_file = os.path.join(full_path, filename)
+        with open(path_and_file, 'rb') as image:  # file path and name
             exif = exifread.process_file(image)
 
         # Take the Data Taken, otherwise take the timestamp.
-        if exif: ### Tem o EXIF mas não tem os campos necessários.
+        if 'EXIF DateTimeDigitized' in exif:
+            new_file_name = str(exif['EXIF DateTimeDigitized'])
+
+            addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using DateTimeDigitized.")
+
+        elif 'EXIF DateTimeOriginal' in exif:
             new_file_name = str(exif['EXIF DateTimeOriginal'])
-            file_width = str(exif['EXIF ExifImageWidth'])
-            file_lenght = str(exif['EXIF ExifImageLength'])
-            new_file_name = new_file_name + '_w_' + file_width + '_l_' + file_lenght
-            new_file_name = new_file_name.replace(".", "")
-            addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using Width and Lenght.")
+            addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using DateTimeOriginal.")
 
         else:
 
@@ -50,11 +53,17 @@ def newFileName(**kwargs):
             new_file_name = new_file_name.strftime("%Y/%m/%d, %H:%M:%S.%f")
             addLogs(full_path_log=full_path_log, message="General", value=f"File {filename} using DateTime.")
 
+        # Get the file size.
+        size = os.stat(path_and_file).st_size / 1000000
+        size = round(size, 3)
+        new_file_name = f"{new_file_name} - {size.__str__()} MB"
+
         if ":" in new_file_name:
             new_file_name = new_file_name.replace(":", ".")
             new_file_name = new_file_name.replace("/", ".")
             new_file_name = new_file_name.replace(",", "")
 
+        #
         return new_file_name
 
     except Exception as ex:
@@ -166,4 +175,3 @@ def addLogs(**kwargs):
 
     except Exception as ex:
         print(f"Log error: ", ex)
-
